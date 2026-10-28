@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linguo</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1A222D">
+    <style>
+        /* === СВЕТЛАЯ ТЕМА === */
+        :root { 
+            --bg-color: #F4EFE6; --text-color: #3A3530; --panel-bg: #FDFDFB; --input-bg: #FDFDFB; --border-color: #DFD5C6; 
+            --orig-text: #3C5A6D; --trans-text: #A8554A; --item-border: #EAE3D7; --read-word-bg: #EBD394; --read-word-text: #3A3530; 
+            --modal-bg: rgba(58, 53, 48, 0.4); --tab-bg: #EAE3D7; --tab-active-bg: #CDBFA9; --tab-active-text: #3A3530; 
+            --btn-neutral-bg: #F2ECE1; --btn-neutral-border: #D5CAB9; --btn-neutral-text: #5A5248; 
+            --btn-gen-bg: #D8E2EA; --btn-gen-text: #2E4F63; --btn-play-bg: #DDE5D8; --btn-play-text: #3B5430; --btn-stop-bg: #ECD8D5; --btn-stop-text: #7B3430; 
+            --btn-shadow: rgba(0, 0, 0, 0.04); --sticky-shadow: rgba(0, 0, 0, 0.02); --watermark-color: #9B8A75;
+        }
+        /* === ТЁМНАЯ ТЕМА === */
+        body.dark-mode { 
+            --bg-color: #1A222D; --text-color: #E2E8F0; --panel-bg: #253140; --input-bg: #2F3D4F; --border-color: #2F3D4F; 
+            --orig-text: #64B5F6; --trans-text: #FFB74D; --item-border: #2F3D4F; --read-word-bg: #3F8CFF; --read-word-text: #FFFFFF; 
+            --modal-bg: rgba(0, 0, 0, 0.7); --tab-bg: #253140; --tab-active-bg: #3F8CFF; --tab-active-text: #FFFFFF; 
+            --btn-neutral-bg: #253140; --btn-neutral-border: #2F3D4F; --btn-neutral-text: #E2E8F0; 
+            --btn-gen-bg: #2B5278; --btn-gen-text: #FFFFFF; --btn-play-bg: #2E7D32; --btn-play-text: #FFFFFF; --btn-stop-bg: #9E2A2B; --btn-stop-text: #FFFFFF; 
+            --btn-shadow: rgba(0, 0, 0, 0.4); --sticky-shadow: rgba(0, 0, 0, 0.3); --watermark-color: #9C88FF; 
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 20px auto; max-width: 850px; padding: 0 15px; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+        .bg-pattern { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1; color: var(--watermark-color); opacity: 0.08; transition: color 0.3s, opacity 0.3s; }
+        body.dark-mode .bg-pattern { opacity: 0.22; }
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .brand { display: flex; flex-direction: column; cursor: pointer; user-select: none; }
+        .brand h1 { margin: 0; font-family: Georgia, serif; font-weight: 800; font-size: 36px; letter-spacing: -0.5px; line-height: 1.2; padding-bottom: 4px; background: linear-gradient(135deg, #2563eb, #7c3aed, #db2777); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        .brand span { font-size: 12px; color: #8A8279; margin-top: 2px; font-weight: 500; letter-spacing: 0.5px; }
+        .top-actions { display: flex; gap: 10px; margin-bottom: 2px; flex-wrap: wrap; align-items: center; cursor: pointer; padding: 5px 10px; border-radius: 8px; user-select: none; }
+        .top-actions:hover { background: var(--item-border); }
+        textarea, input[type="text"], select { width: 100%; padding: 12px 16px; font-size: 15px; font-family: inherit; box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 12px; background-color: var(--input-bg); color: var(--text-color); transition: border-color 0.2s, box-shadow 0.2s, background-color 0.3s; }
+        textarea:focus, input[type="text"]:focus, select:focus { outline: none; border-color: #A3C6DA; box-shadow: 0 0 0 3px rgba(163, 198, 218, 0.2); }
+        body.dark-mode textarea:focus, body.dark-mode input[type="text"]:focus, body.dark-mode select:focus { border-color: #3F8CFF; box-shadow: 0 0 0 3px rgba(63, 140, 255, 0.2); }
+        textarea { height: 200px; resize: vertical; margin-bottom: 15px; line-height: 1.6; }
+        .text-area-tools { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; margin-bottom: 12px; }
+        button { font-family: inherit; font-weight: 500; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 50px; border: 1px solid transparent; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s, background-color 0.2s, color 0.2s; white-space: nowrap; box-shadow: 0 1px 3px var(--btn-shadow); transform: translateY(0); }
+        button:active { transform: translateY(1px); box-shadow: 0 0 0 var(--btn-shadow); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+        .btn-small { padding: 5px 11px !important; font-size: 12px !important; box-shadow: 0 1px 2px var(--btn-shadow) !important; }
+        .btn-small:active { transform: translateY(1px) !important; box-shadow: 0 0 0 var(--btn-shadow) !important; }
+        .btn-neutral { background-color: var(--btn-neutral-bg); border-color: var(--btn-neutral-border); color: var(--btn-neutral-text); }
+        .btn-purple { background-color: #EAE4F0; color: #5A3E6B; }
+        .btn-teal { background-color: #E0EBE9; color: #2E5A57; }
+        body.dark-mode .btn-purple { background-color: #3D2A4D; color: #E0D0F2; }
+        body.dark-mode .btn-teal { background-color: #1F3A3A; color: #99F6E4; }
+        .btn-main-action { background-color: var(--btn-neutral-bg); border-color: var(--btn-neutral-border); color: var(--btn-neutral-text); padding: 10px 22px; font-size: 15px; font-weight: 600; border-radius: 50px; box-shadow: 0 2px 4px var(--btn-shadow); }
+        .btn-main-action:hover { filter: brightness(0.95); }
+        body.dark-mode .btn-main-action:hover { filter: brightness(1.1); }
+        .settings-panel { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; background: var(--panel-bg); padding: 16px 20px; border-radius: 16px; margin-bottom: 16px; border: 1px solid var(--border-color); box-shadow: 0 2px 5px var(--btn-shadow); }
+        .setting-group { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+        .setting-group select { width: auto; padding: 6px 12px; border-radius: 8px; }
+        details.settings-details { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 16px; padding: 12px 20px; box-shadow: 0 2px 5px var(--btn-shadow); transition: background-color 0.3s, border-color 0.3s; }
+        details.settings-details summary { cursor: pointer; font-weight: 500; font-size: 14px; list-style: none; display: flex; align-items: center; justify-content: space-between; color: var(--text-color); outline: none; }
+        details.settings-details summary::-webkit-details-marker { display: none; }
+        details.settings-details summary::after { content: '▼'; font-size: 12px; color: #8A8279; }
+        details[open].settings-details summary::after { content: '▲'; }
+        .settings-content { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--item-border); }
+        .controls-wrapper { position: sticky; top: 0; z-index: 100; background-color: var(--bg-color); padding: 15px 0; margin: 0 -15px 15px -15px; padding-left: 15px; padding-right: 15px; box-shadow: 0 4px 10px var(--sticky-shadow); transition: background-color 0.3s; }
+        .controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin: 0 auto; max-width: 850px; }
+        .control-group-left { display: flex; justify-content: center; width: 100%; gap: 10px; flex-wrap: wrap; align-items: center; }
+        input[type="range"] { cursor: pointer; width: 90px; accent-color: var(--tab-active-bg); }
+        #output { display: flex; flex-direction: column; gap: 12px; padding-bottom: 50px; }
+        #output.hide-translations .translation-text { display: none; }
+        .line-item { display: flex; align-items: flex-start; gap: 16px; padding: 16px; border-radius: 16px; background-color: var(--panel-bg); border: 1px solid var(--border-color); scroll-margin-top: 90px; box-shadow: 0 2px 5px var(--btn-shadow); transition: background-color 0.3s, border-color 0.3s; }
+        .play-btn { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); padding: 0; width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 1px 3px var(--btn-shadow); transition: background-color 0.2s; }
+        .play-btn:active { transform: translateY(1px); box-shadow: 0 0 0 var(--btn-shadow); }
+        .play-btn:hover { background-color: var(--item-border); }
+        .text-container { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 0; }
+        .original-text { line-height: 1.6; font-weight: 500; font-size: 19px; font-family: Georgia, serif; color: var(--orig-text); white-space: pre-wrap; }
+        .translation-text { line-height: 1.5; font-size: 15px; color: var(--trans-text); font-style: italic; font-family: inherit; border-left: 3px solid var(--trans-text); padding-left: 12px; opacity: 0.95; }
+        .word { transition: background-color 0.1s, color 0.1s; border-radius: 4px; padding: 0 2px; display: inline-block; }
+        .word.read-word { background-color: var(--read-word-bg); color: var(--read-word-text); font-weight: 600; }
+        .speaker-tag { font-size: 11px; color: #8A8279; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        #floatingSelectionMenu { position: absolute; display: none; z-index: 9999; background-color: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transform: translate(-50%, -100%); flex-direction: column; align-items: center; gap: 8px; font-family: inherit; }
+        #floatingSelectionMenu.mobile-fixed { position: fixed; bottom: 20px; left: 50%; top: auto !important; transform: translateX(-50%); animation: slideUp 0.2s ease-out; flex-direction: row; align-items: center; width: max-content; max-width: calc(100% - 20px); }
+        #selectionTranslation { font-weight: 500; color: var(--trans-text); font-size: 15px; text-align: center; max-width: 250px; line-height: 1.4; word-break: break-word; }
+        #floatingSelectionMenu .dict-btn { background-color: var(--tab-active-bg); color: #FFFFFF; border: none; padding: 6px 14px; border-radius: 50px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        #floatingSelectionMenu .dict-btn:active { transform: scale(0.95); }
+        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: var(--modal-bg); backdrop-filter: blur(5px); overflow-x: hidden; }
+        .modal-content { background-color: var(--bg-color); margin: 5% auto; padding: 24px; border: 1px solid var(--border-color); border-radius: 20px; width: 90%; max-width: 700px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.1); box-sizing: border-box; position: relative; overflow-x: hidden; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+        .modal-header h3 { margin: 0; font-size: 20px; }
+        .close-btn { background: none; border: none; font-size: 28px; color: var(--text-color); cursor: pointer; padding: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none; transform: none; flex-shrink: 0; transition: background-color 0.2s; }
+        .close-btn:hover { background-color: var(--item-border); }
+        .close-btn:active { transform: scale(0.95); box-shadow: none; }
+        #phraseSearch { margin-bottom: 16px; padding: 10px 16px; font-size: 15px; border-radius: 12px; }
+        .tabs-container { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; align-items: center; gap: 8px; padding: 10px 4px; min-height: 54px; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); scrollbar-width: thin; scrollbar-color: var(--border-color) transparent; }
+        .tabs-container::-webkit-scrollbar { height: 6px; }
+        .tabs-container::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
+        .tabs-container::-webkit-scrollbar-track { background: transparent; }
+        .tab-btn { background-color: var(--tab-bg); color: var(--text-color); border: 1px solid transparent; border-radius: 50px; padding: 8px 16px; font-size: 14px; cursor: pointer; white-space: nowrap; font-weight: 500; box-shadow: 0 1px 3px var(--btn-shadow); transition: all 0.2s; flex-shrink: 0; }
+        .tab-btn:active { transform: translateY(1px); box-shadow: 0 0 0 var(--btn-shadow); }
+        .tab-btn.active { background-color: var(--tab-active-bg); color: var(--tab-active-text); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .phrase-list { overflow-y: auto; padding-right: 4px; flex-grow: 1; min-height: 0; }
+        .phrase-category-title { font-weight: 600; color: var(--text-color); margin: 20px 0 10px 0; font-size: 16px; }
+        .phrase-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: 14px; margin-bottom: 8px; background-color: var(--panel-bg); border: 1px solid var(--border-color); transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 1px 3px var(--btn-shadow); }
+        .phrase-item:hover { border-color: var(--tab-active-bg); box-shadow: 0 3px 8px var(--btn-shadow); }
+        .phrase-text { flex-grow: 1; min-width: 0; cursor: pointer; }
+        .phrase-en { font-weight: 600; font-size: 16px; color: var(--orig-text); margin-bottom: 4px; font-family: Georgia, serif; overflow-wrap: break-word; word-break: break-word; }
+        .phrase-ru { font-size: 14px; color: var(--trans-text); font-style: italic; overflow-wrap: break-word; word-break: break-word; }
+        .phrase-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 12px; }
+        .phrase-play-btn, .edit-phrase-btn, .delete-phrase-btn { background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: all 0.1s; box-shadow: 0 1px 2px var(--btn-shadow); flex-shrink: 0; }
+        .phrase-play-btn:active, .edit-phrase-btn:active, .delete-phrase-btn:active { transform: translateY(1px); box-shadow: 0 0 0 var(--btn-shadow); }
+        .phrase-play-btn:hover { background: var(--item-border); }
+        .edit-phrase-btn:hover { background: #EAE4F0; color: #5A3E6B; border-color: #5A3E6B; }
+        .delete-phrase-btn:hover { background: #ECD8D5; color: #7B3430; border-color: #7B3430; }
+        body.dark-mode .edit-phrase-btn:hover { background: #3D2A4D; color: #E0D0F2; border-color: #E0D0F2; }
+        body.dark-mode .delete-phrase-btn:hover { background: #9E2A2B; color: #FFFFFF; border-color: #9E2A2B; }
+        .add-phrase-form { display: flex; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); flex-wrap: wrap; align-items: flex-start; }
+        .add-phrase-form input { flex: 1; min-width: 150px; margin-bottom: 0; border-radius: 12px; }
+        .category-input-wrapper { flex: 0 1 200px; }
+        .form-help { font-size: 11px; color: #8A8279; margin-top: 6px; display: block; }
+        #downloadStatus { font-size: 13px; color: #8A8279; display: none; align-items: center; gap: 8px; }
+        progress { width: 100px; height: 8px; border-radius: 4px; }
+        progress::-webkit-progress-bar { background-color: var(--border-color); border-radius: 4px; }
+        progress::-webkit-progress-value { background-color: #6B8E23; border-radius: 4px; }
+        .test-question-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .test-icon-btn { background: var(--btn-neutral-bg); border: 1px solid var(--border-color); color: var(--orig-text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; box-shadow: 0 2px 4px var(--btn-shadow); flex-shrink: 0; transition: all 0.1s; }
+        .test-icon-btn:active { transform: translateY(1px); box-shadow: 0 0 0 var(--btn-shadow); }
+        .connected-speech { font-size: 14px; color: #8A8279; font-style: italic; margin-bottom: 25px; min-height: 20px; }
+        .test-option { width: 100%; text-align: left; padding: 15px; margin-bottom: 10px; background: var(--panel-bg); border: 2px solid var(--border-color); color: var(--text-color); border-radius: 14px; font-size: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px var(--btn-shadow); transform: none; }
+        .test-option:hover { background: var(--item-border); transform: translateY(0); border-color: var(--tab-active-bg); }
+        .test-option.correct { background: #E1E8DB !important; border-color: #6B8E23 !important; color: #3E5C3A !important; font-weight: bold; }
+        .test-option.wrong { background: #F2E0DE !important; border-color: #A8554A !important; color: #8A3B3B !important; }
+        body.dark-mode .test-option.correct { background: #1B3320 !important; color: #C9E0BF !important; border-color: #4CAF50 !important; }
+        body.dark-mode .test-option.wrong { background: #3A1A1A !important; color: #F2C9C2 !important; border-color: #E53935 !important; }
+        .modal-content { box-sizing: border-box; }
+        #phrasebookModal .modal-content, #phrasebookModal .phrase-list, #testModal .modal-content { overflow-x: hidden; }
+        .fab-add-btn { display: none; }
+        .mobile-search-toggle { display: none; }
+
+        /* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+        @media (max-width: 600px) {
+            .modal-content { width: calc(100% - 20px); margin: 10px auto; padding: 16px; height: calc(100dvh - 20px); max-height: calc(100dvh - 20px); border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; }
+            .mobile-search-toggle, .fab-add-btn { display: flex; width: 100%; padding: 10px; background: var(--tab-bg); color: var(--text-color); border: 1px solid transparent; border-radius: 8px; margin-bottom: 8px; font-weight: 500; font-size: 14px; cursor: pointer; justify-content: center; align-items: center; box-shadow: none; }
+            .fab-add-btn { margin-top: 10px; margin-bottom: 0; }
+            .search-tabs-wrapper { display: none; flex-shrink: 0; }
+            .search-tabs-wrapper.open { display: block; }
+            .phrase-list { flex-grow: 1; overflow-y: auto; min-height: 0; }
+            .modal-header { gap: 6px; flex-shrink: 0; }
+            .modal-header h3 { font-size: 18px; }
+            .modal-header > div { flex-wrap: wrap; gap: 6px; }
+            .phrase-item { padding: 10px 12px; gap: 8px; }
+            .phrase-en { font-size: 15px; }
+            .phrase-ru { font-size: 13px; }
+            .phrase-actions { gap: 4px; margin-left: 6px; }
+            .phrase-play-btn, .edit-phrase-btn, .delete-phrase-btn { width: 30px; height: 30px; font-size: 12px; }
+            .tab-btn { padding: 6px 12px; font-size: 13px; }
+            .test-question-container { flex-wrap: wrap; gap: 6px; }
+            #testQuestion { font-size: 20px !important; }
+            .test-option { padding: 12px; font-size: 15px; }
+            .text-area-tools { margin-top: 8px; margin-bottom: 8px; }
+            .text-area-tools .btn-small { padding: 4px 10px !important; font-size: 11px !important; }
+            .line-item { padding: 12px; border-radius: 14px; }
+            .controls { gap: 8px; }
+            .control-group-left { gap: 8px; justify-content: center; }
+            .btn-main-action { padding: 8px 16px; font-size: 14px; }
+            .settings-panel { padding: 10px 16px; gap: 10px; margin-bottom: 12px; }
+            .setting-group { font-size: 13px; }
+            details.settings-details { padding: 10px 16px; margin-bottom: 12px; }
+            #selectionTranslation { max-width: 180px; }
+            .add-phrase-form { display: none; position: absolute; bottom: 0; left: 0; right: 0; width: auto; box-sizing: border-box; background: var(--bg-color); padding: 20px 16px; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); z-index: 10; flex-direction: column; gap: 10px; border-top: 1px solid var(--border-color); animation: slideUpSheet 0.3s ease-out forwards; }
+            .add-phrase-form.show { display: flex; }
+            .add-phrase-form input { min-width: 0; flex: 1 1 100%; padding: 10px 12px; }
+            .category-input-wrapper { flex: 1 1 100%; }
+            .close-sheet-btn { align-self: flex-end; background: var(--btn-neutral-bg); color: var(--btn-neutral-text); border: 1px solid var(--btn-neutral-border); padding: 8px 16px; border-radius: 50px; margin-bottom: 5px; font-weight: 500; font-size: 13px; }
+            @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        }
+        @media print { body { background: #ffffff !important; color: #000000 !important; margin: 0; padding: 0; } .bg-pattern, .top-bar, .settings-panel, .controls-wrapper, textarea, input[type="text"], .play-btn, .speaker-tag, .modal, #floatingSelectionMenu, .text-area-tools, #downloadStatus { display: none !important; } #output { display: block; } .line-item { border-bottom: 1px solid #ccc !important; page-break-inside: avoid; margin-bottom: 10px; padding: 10px 0; background: none !important; box-shadow: none !important; border: none !important; border-bottom: 1px solid #ccc !important; border-radius: 0 !important; } .original-text { color: #000000 !important; font-size: 14pt; } .translation-text { color: #333333 !important; font-size: 11pt; border-left: 2px solid #333 !important; } .word.read-word { background: transparent !important; color: #000000 !important; } }
+    </style>
+</head>
+<body>
+
+    <svg class="bg-pattern" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="words" width="350" height="350" patternUnits="userSpaceOnUse">
+          <g fill="currentColor" font-family="Georgia, serif">
+            <text x="10" y="40" font-size="24" transform="rotate(-15 10 40)">hello</text>
+            <text x="180" y="70" font-size="20" transform="rotate(10 180 70)">book</text>
+            <text x="40" y="130" font-size="30" transform="rotate(25 40 130)">read</text>
+            <text x="250" y="160" font-size="22" transform="rotate(-20 250 160)">word</text>
+            <text x="100" y="220" font-size="18" transform="rotate(-5 100 220)">write</text>
+            <text x="280" y="290" font-size="26" transform="rotate(15 280 290)">speak</text>
+            <text x="50" y="340" font-size="20" transform="rotate(-10 50 340)">abc</text>
+            <text x="160" y="110" font-size="16" transform="rotate(35 160 110)">language</text>
+            <text x="20" y="250" font-size="24" transform="rotate(5 20 250)">story</text>
+            <text x="310" y="50" font-size="20" transform="rotate(15 310 50)">learn</text>
+            <text x="330" y="230" font-size="18" transform="rotate(-25 330 230)">study</text>
+            <text x="80" y="420" font-size="24" transform="rotate(20 80 420)">english</text>
+            <text x="220" y="380" font-size="20" transform="rotate(10 220 380)">grammar</text>
+            <text x="260" y="340" font-size="22" transform="rotate(45 260 340)">listen</text>
+            <text x="130" y="45" font-size="26" transform="rotate(-30 130 45)">quiz</text>
+            <path d="M270 90 Q285 80 300 90 v 25 Q285 125 270 115 Z M300 90 Q315 80 330 90 v 25 Q315 125 300 115 Z" stroke="currentColor" fill="none" stroke-width="1.5" transform="rotate(15 300 100)"/>
+            <path d="M60 170 L80 190 L70 200 L50 180 Z M55 185 L65 195 M70 200 L75 205 L70 210 Z" stroke="currentColor" fill="none" stroke-width="1.5" transform="rotate(-30 60 190)"/>
+            <path d="M180 260 h 25 l 8 8 h 30 v 20 h -63 z M180 268 h 63" stroke="currentColor" fill="none" stroke-width="1.5" transform="rotate(10 210 270)"/>
+            <path d="M130 310 h 30 v 40 h -30 z M140 310 v -8 a 10 10 0 0 1 10 0 v 8" stroke="currentColor" fill="none" stroke-width="1.5" transform="rotate(-15 145 330)"/>
+            <path d="M310 310 l 3 9 9 0 -7 5 3 9 -7 -5 -7 5 3 -9 -7 -5 9 0 z" stroke="currentColor" fill="none" stroke-width="1.5"/>
+            <path d="M350 130 a 8 8 0 0 1 8 -8 a 8 8 0 0 1 8 8 a 8 8 0 0 1 -4 6 v 4 h -8 v -4 a 8 8 0 0 1 -4 -6 z M345 142 h 16" stroke="currentColor" fill="none" stroke-width="1.5"/>
+            <path d="M200 30 h 20 v 15 h -20 z M205 30 v -5 h 10 v 5" stroke="currentColor" fill="none" stroke-width="1.5" transform="rotate(-10 210 40)"/>
+          </g>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#words)" />
+    </svg>
+
+    <div class="top-bar">
+        <div class="brand" onclick="toggleTranslations()" title="Скрыть/Показать перевод">
+            <h1>Linguo</h1>
+            <span>Интерактивный чтец и переводчик</span>
+        </div>
+        <div class="top-actions" onclick="toggleTheme()" title="Переключить тему">
+            <button class="btn-teal btn-small" onclick="event.stopPropagation(); openPhrasebook()">📚 Разговорник</button>
+            <button class="btn-purple btn-small" onclick="event.stopPropagation(); window.print()">📄 Save to PDF</button>
+            <span style="font-size: 20px; margin-left: 5px; opacity: 0.6;">🌓</span>
+        </div>
+    </div>
+
+    <input type="text" id="customCharacters" placeholder="Имена персонажей (через запятую): Lacoste, Gamache...">
+
+    <div class="text-area-tools">
+        <button class="btn-neutral btn-small" onclick="clearAll()">🧹 Clean</button>
+        <button class="btn-neutral btn-small" onclick="pasteText()" title="Вставить из буфера обмена">📋 Paste</button>
+        <button class="btn-neutral btn-small" onclick="copyText()" title="Скопировать весь текст">📄 Copy</button>
+    </div>
+
+    <textarea id="dialogInput" placeholder="Вставьте сюда ваш текст..."></textarea>
+
+    <div class="controls-wrapper">
+        <div class="controls">
+            <div class="control-group-left">
+                <button class="btn-main-action" onclick="generateButtons()">Сгенерировать</button>
+                <button class="btn-main-action" id="playAllBtn" onclick="unlockAudioContext(); togglePlayAll()">Воспроизвести</button>
+                <button class="btn-main-action" onclick="stopSpeaking(true)">Остановить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-panel">
+        <div class="setting-group"><label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" id="bookModeCheckbox" checked style="width:16px; height:16px; cursor:pointer; accent-color: var(--tab-active-bg);"> Книжный режим</label></div>
+        <div class="setting-group"><label>Оригинал:</label><select id="sourceLang" onchange="loadVoices(); saveSettings();"><option value="en-US">English (US)</option><option value="en-GB">English (UK)</option><option value="es-ES">Español</option><option value="de-DE">Deutsch</option><option value="fr-FR">Français</option><option value="ru-RU">Русский</option></select></div>
+        <div class="setting-group"><label>Перевод:</label><select id="targetLang" onchange="saveSettings();"><option value="ru">Русский</option><option value="en">English</option><option value="es">Español</option></select></div>
+    </div>
+
+    <details class="settings-details">
+        <summary>⚙️ Настройки голоса</summary>
+        <div class="settings-content">
+            <div class="setting-group"><label for="speechRate">Скорость: <span id="rateValue" style="display:inline-block; width:25px;">1.0</span>x</label><input type="range" id="speechRate" min="0.5" max="1.8" step="0.1" value="1" oninput="document.getElementById('rateValue').innerText = this.value; saveSettings();"></div>
+            <div class="setting-group"><label for="speechPitch">Тон: <span id="pitchValue" style="display:inline-block; width:25px;">1.0</span></label><input type="range" id="speechPitch" min="0.5" max="1.5" step="0.1" value="1" oninput="document.getElementById('pitchValue').innerText = this.value; saveSettings();"></div>
+            <div class="setting-group"><label for="speechVolume">Громкость: <span id="volumeValue" style="display:inline-block; width:25px;">1.0</span></label><input type="range" id="speechVolume" min="0" max="1" step="0.1" value="1" oninput="document.getElementById('volumeValue').innerText = this.value; saveSettings();"></div>
+            <div class="setting-group" style="flex-grow: 1; justify-content: flex-end;">
+                <button class="btn-teal btn-small" id="downloadVoiceBtn" onclick="downloadOfflineDict()">⬇️ Скачать офлайн-словарь</button>
+                <div id="downloadStatus"><progress id="downloadProgress" value="0" max="100"></progress><span id="downloadPercent">0%</span></div>
+            </div>
+        </div>
+    </details>
+
+    <div id="output"></div>
+    
+    <div id="floatingSelectionMenu">
+        <div id="selectionTranslation"></div>
+        <button class="dict-btn" onclick="saveSelectionToDict()">📚 В словарь</button>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО РАЗГОВОРНИКА -->
+    <div id="phrasebookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📚 Разговорник</h3>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-purple btn-small" onclick="openTestModal()">🎮 Тест</button>
+                    <button class="btn-teal btn-small" onclick="document.getElementById('importFileInput').click()">📤 Загрузить</button>
+                    <button class="btn-neutral btn-small" onclick="exportUserPhrases()">📥 Скачать</button>
+                    <button class="close-btn" onclick="closePhrasebook()">×</button>
+                </div>
+            </div>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importUserPhrases(event)">
+
+            <button class="mobile-search-toggle" onclick="toggleSearchPanel()" id="searchToggleBtn">🔍 Поиск и темы ▼</button>
+
+            <div id="searchTabsWrapper" class="search-tabs-wrapper">
+                <input type="text" id="phraseSearch" placeholder="Поиск по фразам..." oninput="renderPhrases()">
+                <div id="categoryTabs" class="tabs-container"></div>
+            </div>
+            
+            <div class="phrase-list" id="phraseList"></div>
+
+            <button class="fab-add-btn" onclick="openAddSheet()">➕ Добавить новую фразу</button>
+
+            <div class="add-phrase-form" id="addPhraseForm">
+                <button class="close-sheet-btn" onclick="closeAddSheet()" style="display:none;">Закрыть ×</button>
+                <div class="category-input-wrapper"><input type="text" id="newPhraseCat" list="existingCategories" placeholder="Тема (или новая)"><datalist id="existingCategories"></datalist><span class="form-help">Впишите тему, если её нет</span></div>
+                <input type="text" id="newPhraseEn" placeholder="Английская фраза..."><input type="text" id="newPhraseRu" placeholder="Перевод...">
+                <button class="btn-gen" onclick="addCustomPhrase()" style="padding: 10px 20px; border-radius: 50px; width: 100%;">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ТЕСТА -->
+    <div id="testModal" class="modal" style="z-index: 1100;">
+        <div class="modal-content" style="text-align: center;">
+            <div class="modal-header">
+                <h3>🎮 Тест по фразам</h3>
+                <button class="close-btn" onclick="closeTestModal()">×</button>
+            </div>
+            <div id="testContent">
+                <div id="testProgress" style="font-size: 14px; color: #8A8279; margin-bottom: 15px;"></div>
+                <div class="test-question-container">
+                    <h2 id="testQuestion" style="font-family: Georgia, serif; color: var(--orig-text); font-size: 24px; margin: 0;">Loading...</h2>
+                    <button class="test-icon-btn" onclick="speakPhrase(document.getElementById('testQuestion').innerText)" title="Прослушать">🔊</button>
+                </div>
+                <div id="testConnectedSpeech" class="connected-speech"></div>
+
+                <div id="testOptions" style="display: flex; flex-direction: column; width: 100%;"></div>
+                <div id="testFeedback" style="margin-top: 20px; font-weight: bold; font-size: 18px; min-height: 30px;"></div>
+                <button class="btn-gen" id="testNextBtn" style="display: none; margin: 20px auto 0; padding: 12px 30px; font-size: 16px; border-radius: 50px;" onclick="nextTestQuestion()">Далее ➡️</button>
+            </div>
+            <div id="testResults" style="display: none;">
+                <h2 style="font-size: 32px; margin-bottom: 10px;">🏆</h2>
+                <h3 style="margin-bottom: 20px;">Тест завершен!</h3>
+                <p style="font-size: 20px; margin-bottom: 20px;">Твой результат: <br><strong id="testScoreText" style="font-size: 36px; color: var(--btn-play-text);"></strong></p>
+                <button class="btn-gen" onclick="openTestModal()" style="margin: 0 auto; padding: 12px 30px; border-radius: 50px;">Пройти еще раз</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let currentUtterance = null, isPlayingAll = false, isPaused = false, currentLineIndex = 0, linesData = [], availableVoices = [], speakerVoiceMap = {}, translationsVisible = true, offlineDict = {}, reverseOfflineDict = {}, globalAudioCtx = null;
+
+        window.unlockAudioContext = function() { if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume(); };
+
+        window.downloadOfflineDict = async function() {
+            const btn = document.getElementById('downloadVoiceBtn'), statusDiv = document.getElementById('downloadStatus'), progressBar = document.getElementById('downloadProgress'), percentSpan = document.getElementById('downloadPercent');
+            btn.disabled = true; btn.innerHTML = '⏳ Загрузка...'; statusDiv.style.display = 'flex'; progressBar.value = 0; percentSpan.innerText = '0%';
+            try {
+                const response = await fetch('./enru.dict.json');
+                if (!response.ok) throw new Error('Файл не найден');
+                const reader = response.body.getReader(), contentLength = +response.headers.get('Content-Length');
+                let receivedLength = 0, chunks = [];
+                while(true) {
+                    const {done, value} = await reader.read(); if (done) break;
+                    chunks.push(value); receivedLength += value.length;
+                    if (contentLength) { const percent = Math.round((receivedLength / contentLength) * 100); progressBar.value = percent; percentSpan.innerText = `${percent}%`; }
+                }
+                const allChunks = new Uint8Array(receivedLength); let position = 0;
+                for(let chunk of chunks) { allChunks.set(chunk, position); position += chunk.length; }
+                offlineDict = JSON.parse(new TextDecoder("utf-8").decode(allChunks));
+                localStorage.setItem('offlineDict', JSON.stringify(offlineDict));
+                buildReverseDict();
+                btn.innerHTML = '✅ Словарь готов'; statusDiv.style.display = 'none'; showToast('🎉 Офлайн-словарь успешно загружен!');
+            } catch (error) {
+                alert('Не удалось загрузить словарь. Проверьте интернет.'); btn.innerHTML = '⬇️ Скачать офлайн-словарь'; btn.disabled = false; statusDiv.style.display = 'none';
+            }
+        };
+
+        function buildReverseDict() {
+            reverseOfflineDict = {};
+            for (let en in offlineDict) {
+                let ru = offlineDict[en].toLowerCase();
+                if (!reverseOfflineDict[ru]) {
+                    reverseOfflineDict[ru] = en;
+                }
+            }
+        }
+
+        function checkOfflineDict() { 
+            const saved = localStorage.getItem('offlineDict'); 
+            if (saved) { 
+                try { 
+                    offlineDict = JSON.parse(saved); 
+                    buildReverseDict();
+                    document.getElementById('downloadVoiceBtn').innerHTML = '✅ Словарь готов'; 
+                } catch(e){} 
+            } 
+        }
+
+        window.copyText = async function() { const text = document.getElementById('dialogInput').value; if (!text) return; try { await navigator.clipboard.writeText(text); showToast('📄 Скопировано!'); } catch (err) {} };
+        window.pasteText = async function() { try { const text = await navigator.clipboard.readText(); if (text) { document.getElementById('dialogInput').value = text; showToast('📋 Вставлено!'); } } catch (err) {} };
+
+        window.showToast = function(message, duration = 2500) {
+            const toast = document.createElement('div'); toast.textContent = message;
+            Object.assign(toast.style, { position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'var(--tab-active-bg)', color: '#FFFFFF', padding: '10px 20px', borderRadius: '50px', zIndex: '9999', fontSize: '14px', fontWeight: '500', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontFamily: "inherit", textAlign: 'center', maxWidth: '80%' });
+            document.body.appendChild(toast); setTimeout(() => { toast.remove(); }, duration);
+        };
+
+        const basePhrasebookData = {
+            "Моё": [
+                { en: "Loundly", ru: "Громко, шумно, громогласно" },
+                { en: "Neat", ru: "Аккуратный" },
+                { en: "Getting out of bed", ru: "Встать с постели" },
+                { en: "I make my bed", ru: "Я застилаю свою постель" },
+                { en: "Flow", ru: "Течь, поток" },
+                { en: "A sink", ru: "Раковина" },
+                { en: "Yawn", ru: "Зевать" },
+                { en: "Мake it look neat", ru: "Сделать так, чтобы это выглядело аккуратно" },
+                { en: "I comb my hair", ru: "Я причесываюсь" },
+                { en: "I put on", ru: "Надевать" },
+                { en: "Getting stronger", ru: "Становится сильнее" },
+                { en: "Keep going!", ru: "Продолжай! Продолжай идти!" },
+                { en: "While (while reading the news)", ru: "Пока (пока читаю новости)" },
+                { en: "Сarefully", ru: "Тщательно (заботливо)" },
+                { en: "Grab", ru: "Схватить, прихватить, вцепиться" },
+                { en: "Choose clothes carefully", ru: "Тщательно подбирать одежду" },
+                { en: "Forecast", ru: "Прогноз" },
+                { en: "Merchant", ru: "Купец" },
+                { en: "to admire", ru: "Восхищаться" },
+                { en: "jealous", ru: "Ревновать" },
+                { en: "pride", ru: "Гордость" },
+                { en: "eminent", ru: "Выдающийся" },
+                { en: "to propose", ru: "Предлагать" },
+                { en: "civilly", ru: "Вежливо" },
+                { en: "to court", ru: "В суд" },
+                { en: "excepting", ru: "За исключением" },
+                { en: "poverty", ru: "Бедность" },
+                { en: "to deserve", ru: "Заслуживать" },
+                { en: "extremely", ru: "В высшей степени" },
+                { en: "misfortune", ru: "Несчастье" }
+            ],
+            "A1. База": [
+                { en: "Hello! How are you?", ru: "Привет! Как дела?" },
+                { en: "What is your name?", ru: "Как тебя зовут?" },
+                { en: "My name is...", ru: "Меня зовут..." },
+                { en: "Nice to meet you.", ru: "Приятно познакомиться." },
+                { en: "I don't understand.", ru: "Я не понимаю." },
+                { en: "Can you repeat that, please?", ru: "Можете повторить, пожалуйста?" },
+                { en: "I don't speak English well.", ru: "Я не очень хорошо говорю по-английски." },
+                { en: "Where is the bathroom?", ru: "Где туалет?" },
+                { en: "How much does it cost?", ru: "Сколько это стоит?" },
+                { en: "I would like a coffee.", ru: "Я бы хотел кофе." },
+                { en: "Thank you very much.", ru: "Большое спасибо." },
+                { en: "You're welcome.", ru: "Пожалуйста (в ответ)." },
+                { en: "Excuse me.", ru: "Извините." },
+                { en: "Goodbye! See you later.", ru: "До свидания! Увидимся позже." },
+                { en: "I am from Russia.", ru: "Я из России." },
+                { en: "Where are you from?", ru: "Откуда ты?" },
+                { en: "I am hungry.", ru: "Я голоден." },
+                { en: "I am tired.", ru: "Я устал." },
+                { en: "Help me, please.", ru: "Помогите мне, пожалуйста." },
+                { en: "What time is it?", ru: "Который час?" }
+            ],
+            "A2. Быт": [
+                { en: "I am looking for a hotel.", ru: "Я ищу отель." },
+                { en: "Can you help me, please?", ru: "Не могли бы вы мне помочь?" },
+                { en: "I went to the park yesterday.", ru: "Вчера я ходил в парк." },
+                { en: "I am going to travel next week.", ru: "Я собираюсь путешествовать на следующей неделе." },
+                { en: "How far is it from here?", ru: "Как далеко это отсюда?" },
+                { en: "Could I have the menu, please?", ru: "Можно мне меню, пожалуйста?" },
+                { en: "The bill, please.", ru: "Счёт, пожалуйста." },
+                { en: "I am allergic to nuts.", ru: "У меня аллергия на орехи." },
+                { en: "Where can I buy a ticket?", ru: "Где я могу купить билет?" },
+                { en: "I have a reservation.", ru: "У меня есть бронь." },
+                { en: "What do you do for a living?", ru: "Чем ты зарабатываешь на жизнь?" },
+                { en: "I work as a manager.", ru: "Я работаю менеджером." },
+                { en: "I have been learning English for two years.", ru: "Я учу английский два года." },
+                { en: "It is raining today.", ru: "Сегодня идёт дождь." },
+                { en: "I need to go to the airport.", ru: "Мне нужно в аэропорт." },
+                { en: "Can I pay by card?", ru: "Можно оплатить картой?" },
+                { en: "I like this song.", ru: "Мне нравится эта песня." },
+                { en: "What are you doing this weekend?", ru: "Что ты делаешь на выходных?" },
+                { en: "I have a headache.", ru: "У меня болит голова." },
+                { en: "Turn left at the traffic lights.", ru: "Поверните налево на светофоре." }
+            ],
+            "B1. Мнения": [
+                { en: "In my opinion, it is a good idea.", ru: "По моему мнению, это хорошая идея." },
+                { en: "I completely agree with you.", ru: "Я полностью с тобой согласен." },
+                { en: "I'm afraid I have to disagree.", ru: "Боюсь, я вынужден не согласиться." },
+                { en: "What do you think about this?", ru: "Что ты думаешь об этом?" },
+                { en: "It depends on the situation.", ru: "Зависит от ситуации." },
+                { en: "I am worried about the exam.", ru: "Я волнуюсь из-за экзамена." },
+                { en: "I would like to make a complaint.", ru: "Я хотел бы подать жалобу." },
+                { en: "Could you explain that again, please?", ru: "Не могли бы вы объяснить это ещё раз?" },
+                { en: "I'm looking forward to meeting you.", ru: "С нетерпением жду встречи с вами." },
+                { en: "It's not my cup of tea.", ru: "Это не в моём вкусе." },
+                { en: "I have mixed feelings about it.", ru: "У меня двоякие чувства по этому поводу." },
+                { en: "Let me think about it.", ru: "Дайте мне подумать об этом." },
+                { en: "That sounds like a great plan.", ru: "Звучит как отличный план." },
+                { en: "I'm afraid I can't make it.", ru: "Боюсь, я не смогу прийти." },
+                { en: "As far as I know, he is coming.", ru: "Насколько я знаю, он приедет." },
+                { en: "I used to live in London.", ru: "Раньше я жил в Лондоне." },
+                { en: "I'm not sure about that.", ru: "Я не уверен в этом." },
+                { en: "You have a good point there.", ru: "Тут ты прав (хорошая мысль)." },
+                { en: "It's worth trying.", ru: "Это стоит попробовать." },
+                { en: "I'm just kidding.", ru: "Я просто шучу." }
+            ],
+            "B2. Продвинутый": [
+                { en: "That's a valid point, but...", ru: "Это веский аргумент, но..." },
+                { en: "I beg to differ.", ru: "Позволю себе не согласиться." },
+                { en: "To be honest with you...", ru: "Честно говоря..." },
+                { en: "It's a double-edged sword.", ru: "Это палка о двух концах." },
+                { en: "Let's weigh the pros and cons.", ru: "Давайте взвесим все за и против." },
+                { en: "I'm completely against this decision.", ru: "Я полностью против этого решения." },
+                { en: "It goes without saying.", ru: "Само собой разумеется." },
+                { en: "You're missing the point.", ru: "Ты упускаешь суть." },
+                { en: "I take your point, however...", ru: "Я принимаю твой аргумент, однако..." },
+                { en: "It's easier said than done.", ru: "Легко сказать, да трудно сделать." },
+                { en: "I couldn't agree more.", ru: "Не могу не согласиться (полностью согласен)." },
+                { en: "That's out of the question.", ru: "Об этом не может быть и речи." },
+                { en: "I'm on the fence about this.", ru: "Я колеблюсь (не могу решить) по этому поводу." },
+                { en: "It's a matter of time.", ru: "Это вопрос времени." },
+                { en: "I have a lot on my plate right now.", ru: "У меня сейчас по горло дел." },
+                { en: "Let's cut to the chase.", ru: "Давайте перейдём к делу." },
+                { en: "I'm a bit under the weather.", ru: "Я немного приболел." },
+                { en: "It's not the end of the world.", ru: "Свет клином не сошёлся (не конец света)." },
+                { en: "You can say that again.", ru: "Тут не поспоришь / Именно так." },
+                { en: "Speak of the devil.", ru: "Лёгок на помине." }
+            ],
+            "Чанки": [
+                { en: "By the way...", ru: "Кстати..." },
+                { en: "As a matter of fact...", ru: "Собственно говоря..." },
+                { en: "In the long run...", ru: "В долгосрочной перспективе..." },
+                { en: "Make a decision", ru: "Принять решение" },
+                { en: "Take a shower", ru: "Принять душ" },
+                { en: "Have a look", ru: "Взглянуть" },
+                { en: "Get in touch", ru: "Связаться" },
+                { en: "Piece of cake", ru: "Проще простого" },
+                { en: "Break the ice", ru: "Растопить лёд (начать общение)" },
+                { en: "Once in a blue moon", ru: "Очень редко" },
+                { en: "Hit the books", ru: "Засесть за учёбу" },
+                { en: "Under the weather", ru: "Неважно себя чувствовать" },
+                { en: "Cost an arm and a leg", ru: "Стоить очень дорого" },
+                { en: "Kill two birds with one stone", ru: "Убить двух зайцев одним выстрелом" },
+                { en: "Let the cat out of the bag", ru: "Проговориться / Выдать секрет" },
+                { en: "On the other hand", ru: "С другой стороны" },
+                { en: "To sum up", ru: "Подводя итог" },
+                { en: "In terms of...", ru: "С точки зрения / В плане..." },
+                { en: "Sooner or later", ru: "Рано или поздно" },
+                { en: "Better late than never", ru: "Лучше поздно, чем никогда" },
+                { en: "No pain, no gain", ru: "Без труда не вытащишь и рыбку из пруда" },
+                { en: "It's up to you", ru: "Решать тебе" },
+                { en: "Believe it or not", ru: "Верь или не верь" },
+                { en: "See eye to eye", ru: "Сходиться во мнениях" },
+                { en: "Pull yourself together", ru: "Возьми себя в руки" },
+                { en: "Take a break", ru: "Сделать перерыв" },
+                { en: "Catch a cold", ru: "Простудиться" },
+                { en: "Pay attention", ru: "Обратить внимание" },
+                { en: "Make a mistake", ru: "Сделать ошибку" },
+                { en: "Keep in touch", ru: "Поддерживать связь" },
+                { en: "Run out of time", ru: "Закончилось время" },
+                { en: "Get along with", ru: "Ладить с кем-то" },
+                { en: "Look forward to", ru: "С нетерпением ждать" },
+                { en: "Put off", ru: "Отложить (на потом)" },
+                { en: "Take part in", ru: "Принимать участие в" },
+                { en: "Give up", ru: "Сдаться / Бросить" },
+                { en: "Find out", ru: "Выяснить" },
+                { en: "Figure out", ru: "Понять / Разобраться" },
+                { en: "Carry on", ru: "Продолжать" },
+                { en: "Turn out", ru: "Оказаться" },
+                { en: "Set up", ru: "Установить / Организовать" },
+                { en: "Work out", ru: "Тренироваться / Получиться" }
+            ]
+        };
+
+        let userPhrases = {};
+        try { userPhrases = JSON.parse(localStorage.getItem('userPhrases')) || {}; } catch (e) { localStorage.removeItem('userPhrases'); }
+
+        window.getCombinedDatabase = function() {
+            let combined = JSON.parse(JSON.stringify(basePhrasebookData));
+            for (const [cat, phrases] of Object.entries(userPhrases)) {
+                if (!combined[cat]) combined[cat] = [];
+                combined[cat] = combined[cat].concat(phrases);
+            }
+            return combined;
+        };
+        let activeCategory = 'all';
+
+        window.openPhrasebook = function() { document.getElementById('phrasebookModal').style.display = 'block'; document.getElementById('phraseSearch').value = ''; activeCategory = 'all'; updateDatalist(); renderTabs(); renderPhrases(); };
+        window.closePhrasebook = function() { document.getElementById('phrasebookModal').style.display = 'none'; };
+        window.onclick = function(e) { if (e.target == document.getElementById('phrasebookModal')) closePhrasebook(); };
+        document.getElementById('categoryTabs').addEventListener('wheel', function(e) { e.preventDefault(); this.scrollLeft += e.deltaY; });
+
+        function updateDatalist() { const dl = document.getElementById('existingCategories'); dl.innerHTML = ''; const cats = Object.keys(getCombinedDatabase()).sort(); cats.forEach(c => { const o = document.createElement('option'); o.value = c; dl.appendChild(o); }); }
+        function renderTabs() { const tc = document.getElementById('categoryTabs'); tc.innerHTML = ''; const cats = ['all', ...Object.keys(getCombinedDatabase()).sort()]; cats.forEach(c => { const b = document.createElement('button'); b.className = `tab-btn ${activeCategory === c ? 'active' : ''}`; b.textContent = c === 'all' ? 'Все темы' : c; b.onclick = () => { activeCategory = c; renderTabs(); renderPhrases(); }; tc.appendChild(b); }); }
+
+        function renderPhrases() {
+            const q = document.getElementById('phraseSearch').value.toLowerCase(), list = document.getElementById('phraseList'), db = getCombinedDatabase();
+            list.innerHTML = ''; const catsToShow = activeCategory === 'all' ? Object.keys(db).sort() : [activeCategory]; let hasRes = false;
+            catsToShow.forEach(cat => {
+                const ph = db[cat] || [], filt = ph.filter(p => (p.en||'').toLowerCase().includes(q) || (p.ru||'').toLowerCase().includes(q));
+                if (filt.length > 0) {
+                    hasRes = true; if (activeCategory === 'all' && q === '') { const cd = document.createElement('div'); cd.className = 'phrase-category-title'; cd.textContent = cat; list.appendChild(cd); }
+                    filt.forEach(p => {
+                        const iDiv = document.createElement('div'); iDiv.className = 'phrase-item';
+                        const tDiv = document.createElement('div'); tDiv.className = 'phrase-text'; tDiv.title = "Нажмите, чтобы скопировать";
+                        tDiv.onclick = () => { navigator.clipboard.writeText(p.en); const o = tDiv.innerHTML; tDiv.innerHTML = `<span style="color:var(--tab-active-bg); font-weight:600;">Скопировано!</span>`; setTimeout(() => tDiv.innerHTML = o, 1000); };
+                        tDiv.innerHTML = `<div class="phrase-en">${p.en}</div><div class="phrase-ru">${p.ru}</div>`;
+                        const aDiv = document.createElement('div'); aDiv.className = 'phrase-actions';
+                        const pb = document.createElement('button'); pb.className = 'phrase-play-btn'; pb.innerHTML = '▶️'; pb.onclick = () => speakPhrase(p.en); aDiv.appendChild(pb);
+                        if (userPhrases[cat] && userPhrases[cat].some(up => up.en === p.en)) {
+                            const eb = document.createElement('button'); eb.className = 'edit-phrase-btn'; eb.innerHTML = '✏️'; eb.onclick = () => editPhraseCategory(cat, p.en); aDiv.appendChild(eb);
+                            const delBtn = document.createElement('button'); delBtn.className = 'delete-phrase-btn'; delBtn.innerHTML = '🗑️'; delBtn.onclick = () => deleteUserPhrase(p.en); aDiv.appendChild(delBtn);
+                        }
+                        iDiv.appendChild(tDiv); iDiv.appendChild(aDiv); list.appendChild(iDiv);
+                    });
+                }
+            });
+            if (!hasRes) list.innerHTML = '<p style="text-align:center; color:#8A8279; margin-top:30px;">Ничего не найдено.</p>';
+        }
+
+        window.addCustomPhrase = function() {
+            let cat = document.getElementById('newPhraseCat').value.trim() || "Разное", en = document.getElementById('newPhraseEn').value.trim(), ru = document.getElementById('newPhraseRu').value.trim();
+            if (!en || !ru) { alert("Заполните оба поля."); return; }
+            
+            const allPhrases = Object.values(getCombinedDatabase()).flat();
+            const isDuplicate = allPhrases.some(p => p.en.toLowerCase() === en.toLowerCase());
+            if (isDuplicate) { 
+                showToast('⚠️ Такое слово/фраза уже есть в словаре!'); 
+                return; 
+            }
+
+            if (!userPhrases[cat]) userPhrases[cat] = []; userPhrases[cat].push({ en, ru });
+            localStorage.setItem('userPhrases', JSON.stringify(userPhrases)); document.getElementById('newPhraseEn').value = ''; document.getElementById('newPhraseRu').value = '';
+            updateDatalist(); activeCategory = cat; renderTabs(); renderPhrases();
+            showToast('✅ Успешно добавлено!');
+            
+            if (window.innerWidth < 600) closeAddSheet();
+        };
+
+        window.editPhraseCategory = function(oldCat, enText) {
+            const newCat = prompt("Введите новую тему:", oldCat); if (!newCat || newCat.trim() === "" || newCat === oldCat) return;
+            const trim = newCat.trim(), idx = userPhrases[oldCat].findIndex(p => p.en === enText);
+            if (idx !== -1) {
+                const phrase = userPhrases[oldCat].splice(idx, 1)[0]; if (userPhrases[oldCat].length === 0) delete userPhrases[oldCat];
+                if (!userPhrases[trim]) userPhrases[trim] = []; userPhrases[trim].push(phrase);
+                localStorage.setItem('userPhrases', JSON.stringify(userPhrases)); updateDatalist(); activeCategory = trim; renderTabs(); renderPhrases();
+            }
+        };
+
+        window.deleteUserPhrase = function(enText) {
+            if (!confirm("Удалить эту фразу?")) return;
+            for (const [cat, ph] of Object.entries(userPhrases)) { const idx = ph.findIndex(p => p.en === enText); if (idx !== -1) { ph.splice(idx, 1); if (ph.length === 0) delete userPhrases[cat]; break; } }
+            localStorage.setItem('userPhrases', JSON.stringify(userPhrases)); updateDatalist(); renderTabs(); renderPhrases();
+        };
+
+        window.exportUserPhrases = function() {
+            if (Object.keys(userPhrases).length === 0) { alert("Нет фраз."); return; }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userPhrases, null, 2));
+            const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "my_phrases.json"); document.body.appendChild(a); a.click(); a.remove();
+        };
+
+        window.importUserPhrases = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    let addedCount = 0;
+
+                    for (const [category, phrases] of Object.entries(importedData)) {
+                        if (!userPhrases[category]) userPhrases[category] = [];
+                        
+                        phrases.forEach(importedPhrase => {
+                            const exists = userPhrases[category].some(p => p.en === importedPhrase.en);
+                            if (!exists) {
+                                userPhrases[category].push(importedPhrase);
+                                addedCount++;
+                            }
+                        });
+                    }
+
+                    localStorage.setItem('userPhrases', JSON.stringify(userPhrases));
+                    updateDatalist();
+                    activeCategory = 'all';
+                    renderTabs();
+                    renderPhrases();
+                    
+                    showToast(`✅ Загружено ${addedCount} новых фраз!`);
+                } catch (err) {
+                    console.error("Ошибка импорта:", err);
+                    alert("Ошибка при чтении файла. Убедитесь, что это правильный JSON-файл из Linguo.");
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        };
+
+        function getConnectedSpeech(text) {
+            let t = text.toLowerCase();
+            const reductions = [
+                { pattern: /\bwant to\b/g, replacement: "wanna" },
+                { pattern: /\bgoing to\b/g, replacement: "gonna" },
+                { pattern: /\bgot to\b/g, replacement: "gotta" },
+                { pattern: /\bkind of\b/g, replacement: "kinda" },
+                { pattern: /\bsort of\b/g, replacement: "sorta" },
+                { pattern: /\bout of\b/g, replacement: "outta" },
+                { pattern: /\bdon't know\b/g, replacement: "dunno" },
+                { pattern: /\blet me\b/g, replacement: "lemme" },
+                { pattern: /\bgive me\b/g, replacement: "gimme" },
+                { pattern: /\bwhat are you\b/g, replacement: "whatcha" },
+                { pattern: /\bwhat do you\b/g, replacement: "whaddaya" },
+                { pattern: /\bdid you\b/g, replacement: "didja" },
+                { pattern: /\bhow are you\b/g, replacement: "howarya" },
+                { pattern: /\bsee you\b/g, replacement: "seeya" }
+            ];
+
+            let hasChanges = false;
+            for (let r of reductions) {
+                if (r.pattern.test(t)) {
+                    t = t.replace(r.pattern, r.replacement);
+                    hasChanges = true;
+                }
+            }
+            return hasChanges ? t : null;
+        }
+
+        let testQuestions = [], testIndex = 0, testScore = 0;
+        
+        window.openTestModal = function() {
+            let allPhrases = [];
+            const db = getCombinedDatabase();
+            for (const cat of Object.keys(db)) { allPhrases = allPhrases.concat(db[cat]); }
+            allPhrases = allPhrases.filter(p => p.en && p.ru);
+
+            if (allPhrases.length < 3) {
+                alert("Для теста нужно минимум 3 фразы! Добавьте больше слов в Разговорник.");
+                return;
+            }
+
+            allPhrases.sort(() => Math.random() - 0.5);
+            const numQ = Math.min(10, allPhrases.length);
+            
+            testQuestions = [];
+            for (let i = 0; i < numQ; i++) {
+                const correct = allPhrases[i];
+                let options = [correct.ru];
+                
+                let distractors = allPhrases.filter(p => p.ru !== correct.ru);
+                distractors.sort(() => Math.random() - 0.5);
+                for (let j = 0; j < Math.min(2, distractors.length); j++) {
+                    options.push(distractors[j].ru);
+                }
+                
+                options.sort(() => Math.random() - 0.5);
+                
+                testQuestions.push({
+                    en: correct.en,
+                    ru: correct.ru,
+                    options: options
+                });
+            }
+
+            testIndex = 0;
+            testScore = 0;
+            
+            document.getElementById('testResults').style.display = 'none';
+            document.getElementById('testContent').style.display = 'block';
+            document.getElementById('phrasebookModal').style.display = 'none';
+            document.getElementById('testModal').style.display = 'block';
+            
+            renderTestQuestion();
+        };
+
+        window.closeTestModal = function() { document.getElementById('testModal').style.display = 'none'; };
+
+        function renderTestQuestion() {
+            if (testIndex >= testQuestions.length) { endTest(); return; }
+
+            const q = testQuestions[testIndex];
+            document.getElementById('testProgress').innerText = `Вопрос ${testIndex + 1} из ${testQuestions.length}`;
+            document.getElementById('testQuestion').innerText = q.en;
+            
+            const csDiv = document.getElementById('testConnectedSpeech');
+            const csText = getConnectedSpeech(q.en);
+            if (csText) {
+                csDiv.innerHTML = `🇺🇸 В беглой речи: <b>${csText}</b>`;
+            } else {
+                csDiv.innerHTML = '';
+            }
+
+            const optionsDiv = document.getElementById('testOptions');
+            optionsDiv.innerHTML = '';
+            
+            document.getElementById('testFeedback').innerText = '';
+            document.getElementById('testNextBtn').style.display = 'none';
+
+            q.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'test-option';
+                btn.textContent = opt;
+                btn.onclick = () => checkTestAnswer(btn, opt === q.ru, q.ru);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkTestAnswer(clickedBtn, isCorrect, correctRu) {
+            const allBtns = document.querySelectorAll('.test-option');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            if (isCorrect) {
+                clickedBtn.classList.add('correct');
+                document.getElementById('testFeedback').innerHTML = '<span style="color:var(--btn-play-bg);">✅ Верно!</span>';
+                testScore++;
+            } else {
+                clickedBtn.classList.add('wrong');
+                document.getElementById('testFeedback').innerHTML = `<span style="color:var(--btn-stop-bg);">❌ Ошибка. Правильно: <br> ${correctRu}</span>`;
+                allBtns.forEach(b => { if (b.textContent === correctRu) b.classList.add('correct'); });
+            }
+            document.getElementById('testNextBtn').style.display = 'inline-flex';
+        }
+
+        window.nextTestQuestion = function() { testIndex++; renderTestQuestion(); };
+
+        function endTest() {
+            document.getElementById('testContent').style.display = 'none';
+            document.getElementById('testResults').style.display = 'block';
+            const percent = Math.round((testScore / testQuestions.length) * 100);
+            let grade = "😢";
+            if (percent === 100) grade = "🏆 Идеально!";
+            else if (percent >= 80) grade = "🔥 Отлично!";
+            else if (percent >= 50) grade = "👍 Неплохо!";
+            else grade = "📚 Нужно повторить.";
+
+            document.getElementById('testScoreText').innerHTML = `${testScore} из ${testQuestions.length} <br> <span style="font-size: 20px;">${grade}</span>`;
+        }
+
+        window.speakPhrase = function(text) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text.trim());
+            u.rate = 0.7; 
+            u.pitch = parseFloat(document.getElementById('speechPitch').value);
+            u.volume = parseFloat(document.getElementById('speechVolume').value);
+            
+            const v = window.speechSynthesis.getVoices().find(v => v.lang.startsWith(document.getElementById('sourceLang').value.split('-')[0]));
+            if (v) { u.voice = v; u.lang = v.lang; } 
+            
+            setTimeout(() => { window.speechSynthesis.speak(u); }, 50);
+        };
+
+        function speakTextFallback(text, speakerName, index = null, onEnd = null) {
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            if (speakerName && speakerVoiceMap[speakerName]) { const v = speakerVoiceMap[speakerName]; currentUtterance.voice = v; currentUtterance.lang = v.lang; currentUtterance.voiceURI = v.voiceURI; } else { currentUtterance.lang = document.getElementById('sourceLang').value; }
+            currentUtterance.rate = parseFloat(document.getElementById('speechRate').value); currentUtterance.pitch = parseFloat(document.getElementById('speechPitch').value); currentUtterance.volume = parseFloat(document.getElementById('speechVolume').value);
+            currentUtterance.onboundary = (event) => { if (event.name === 'word' && index !== null) { const c = document.getElementById(`orig-${index}`); if (c) { const ot = linesData[index].original, st = text; let off = ot.indexOf(st); if (off === -1) { off = ot.indexOf(st.split(/\s+/)[0]); } if (off === -1) off = 0; highlightUpTo(c, event.charIndex + off); } } };
+            currentUtterance.onend = () => { if (index !== null) { const c = document.getElementById(`orig-${index}`); if (c) c.querySelectorAll('.word').forEach(el => el.classList.add('read-word')); } if (onEnd) onEnd(); };
+            currentUtterance.onerror = () => { if (onEnd) onEnd(); }; window.speechSynthesis.speak(currentUtterance);
+        }
+
+        function highlightUpTo(container, charIdx) {
+            let currLen = 0; for (let i = 0; i < container.childNodes.length; i++) { const n = container.childNodes[i]; if (n.nodeType === 3) currLen += n.textContent.length; else if (n.nodeType === 1 && n.classList.contains('word')) { if (currLen <= charIdx + 1) n.classList.add('read-word'); currLen += n.textContent.length; } }
+        }
+
+        let selectedTextForDict = "";
+        let translationReqId = 0;
+
+        window.handleSelection = function(e) {
+            if (e.target.closest('.modal') || e.target.closest('#floatingSelectionMenu')) return; 
+            
+            const sel = window.getSelection(), menu = document.getElementById('floatingSelectionMenu'); 
+            let text = "", rect = null;
+            const ta = document.getElementById('dialogInput');
+            
+            if (document.activeElement === ta) { 
+                const s = ta.selectionStart, en = ta.selectionEnd; 
+                text = ta.value.substring(s, en).trim(); 
+                if (text.length > 0) { 
+                    const r = ta.getBoundingClientRect(); 
+                    rect = { left: r.left + r.width / 2, top: r.top + window.scrollY - 10 }; 
+                } 
+            }
+            
+            if (!text && sel.toString().trim().length > 0) { 
+                text = sel.toString().trim(); 
+                if (sel.rangeCount > 0) { 
+                    const r = sel.getRangeAt(0).getBoundingClientRect(); 
+                    rect = { left: r.left + window.scrollX + (r.width / 2), top: r.top + window.scrollY - 10 }; 
+                } 
+            }
+            
+            if (text.length > 0 && rect) { 
+                if (selectedTextForDict !== text) {
+                    selectedTextForDict = text;
+                    translateSelection(text);
+                }
+                
+                menu.style.display = 'flex'; 
+                if (e.type === 'touchend' || window.innerWidth < 600) { 
+                    menu.classList.add('mobile-fixed'); 
+                    menu.style.left = ''; 
+                    menu.style.top = ''; 
+                } else { 
+                    menu.classList.remove('mobile-fixed'); 
+                    menu.style.left = `${rect.left}px`; 
+                    menu.style.top = `${rect.top}px`; 
+                } 
+            } else { 
+                menu.style.display = 'none'; 
+            }
+        };
+
+        async function translateSelection(text) {
+            const reqId = ++translationReqId;
+            const transEl = document.getElementById('selectionTranslation');
+            transEl.innerHTML = '<span style="opacity:0.6;">⏳ Перевод...</span>';
+            
+            const cleanWord = text.toLowerCase().replace(/[^\p{L}\p{N}-]/gu, '');
+            if (offlineDict && offlineDict[cleanWord]) {
+                setTimeout(() => {
+                    if (reqId === translationReqId) transEl.textContent = offlineDict[cleanWord];
+                }, 50);
+                return;
+            }
+
+            try {
+                const res = await fetchTranslation(text);
+                if (reqId === translationReqId) {
+                    transEl.textContent = res;
+                }
+            } catch (err) {
+                if (reqId === translationReqId) transEl.textContent = '⚠️ Не удалось перевести';
+            }
+        }
+
+        document.addEventListener('mouseup', handleSelection); 
+        document.addEventListener('touchend', handleSelection);
+        
+        document.addEventListener('mousedown', (e) => { 
+            if (!e.target.closest('#floatingSelectionMenu')) {
+                document.getElementById('floatingSelectionMenu').style.display = 'none'; 
+            }
+        });
+        document.addEventListener('touchstart', (e) => { 
+            if (!e.target.closest('#floatingSelectionMenu') && !window.getSelection().toString()) {
+                document.getElementById('floatingSelectionMenu').style.display = 'none'; 
+            }
+        });
+
+        window.saveSelectionToDict = function() {
+            if (!selectedTextForDict) return; 
+            openPhrasebook(); 
+            document.getElementById('newPhraseEn').value = selectedTextForDict; 
+            document.getElementById('newPhraseRu').value = ''; 
+            
+            if (window.innerWidth < 600) {
+                openAddSheet();
+            } else {
+                document.getElementById('newPhraseRu').focus();
+            }
+            
+            document.getElementById('floatingSelectionMenu').style.display = 'none'; 
+            window.getSelection().removeAllRanges();
+        };
+
+        window.toggleTheme = function() { document.body.classList.toggle('dark-mode'); if (document.body.classList.contains('dark-mode')) localStorage.setItem('dialogTheme', 'dark'); else localStorage.setItem('dialogTheme', 'light'); };
+        function initTheme() { if (localStorage.getItem('dialogTheme') === 'dark') document.body.classList.add('dark-mode'); }
+        window.toggleTranslations = function() { const out = document.getElementById('output'); translationsVisible = !translationsVisible; if (translationsVisible) { out.classList.remove('hide-translations'); showToast('👁️ Перевод показан'); } else { out.classList.add('hide-translations'); showToast('🙈 Перевод скрыт'); } };
+
+        window.saveSettings = function() {
+            localStorage.setItem('dialogAppSettings', JSON.stringify({ bookMode: document.getElementById('bookModeCheckbox').checked, sourceLang: document.getElementById('sourceLang').value, targetLang: document.getElementById('targetLang').value, rate: document.getElementById('speechRate').value, pitch: document.getElementById('speechPitch').value, volume: document.getElementById('speechVolume').value, chars: document.getElementById('customCharacters').value }));
+        };
+
+        function loadSettings() {
+            const s = JSON.parse(localStorage.getItem('dialogAppSettings'));
+            if (s) {
+                document.getElementById('bookModeCheckbox').checked = s.bookMode; document.getElementById('sourceLang').value = s.sourceLang; document.getElementById('targetLang').value = s.targetLang;
+                document.getElementById('speechRate').value = s.rate; document.getElementById('rateValue').innerText = s.rate; document.getElementById('speechPitch').value = s.pitch; document.getElementById('pitchValue').innerText = s.pitch;
+                document.getElementById('speechVolume').value = s.volume !== undefined ? s.volume : 1; document.getElementById('volumeValue').innerText = s.volume !== undefined ? s.volume : 1;
+                document.getElementById('customCharacters').value = s.chars || '';
+            }
+        }
+
+        function loadVoices() {
+            const sourceLang = document.getElementById('sourceLang').value, all = window.speechSynthesis.getVoices();
+            availableVoices = all.filter(v => v.lang.startsWith(sourceLang.split('-')[0])); if (availableVoices.length === 0) availableVoices = all;
+        }
+        loadVoices(); if (speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = loadVoices;
+
+        window.togglePlayAll = function() {
+            if (linesData.length === 0) { alert("Сначала сгенерируйте текст."); return; }
+            const btn = document.getElementById('playAllBtn');
+            if (isPlayingAll && !isPaused) { isPaused = true; window.speechSynthesis.cancel(); document.querySelectorAll('.line-item').forEach(el => el.classList.remove('active-line')); btn.innerHTML = 'Продолжить'; btn.className = 'btn-main-action'; }
+            else { isPlayingAll = true; isPaused = false; btn.innerHTML = 'Пауза'; btn.className = 'btn-main-action'; playNextLine(); }
+        };
+
+        function playNextLine() {
+            if (!isPlayingAll || isPaused || currentLineIndex >= linesData.length) { if (currentLineIndex >= linesData.length) stopSpeaking(true); return; }
+            const d = linesData[currentLineIndex]; speakText(d.speechText, d.speaker, currentLineIndex, () => { currentLineIndex++; setTimeout(playNextLine, 1000); });
+        }
+
+        window.stopSpeaking = function(resetIdx = false) {
+            isPlayingAll = false; isPaused = false; window.speechSynthesis.cancel(); document.querySelectorAll('.word').forEach(el => el.classList.remove('read-word'));
+            if (resetIdx) currentLineIndex = 0; const btn = document.getElementById('playAllBtn'); btn.innerHTML = 'Воспроизвести'; btn.className = 'btn-main-action';
+        };
+
+        async function fetchTranslation(text, retries = 1) {
+            if (!text || text.trim() === '') return '';
+            const targetLang = document.getElementById('targetLang').value;
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+                const response = await fetch(url, { signal: controller.signal }); 
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json(); return data[0].map(item => item[0]).join('');
+            } catch (error) {
+                clearTimeout(timeoutId);
+                
+                if (Object.keys(offlineDict).length > 0) {
+                    try {
+                        if (targetLang === 'ru') {
+                            let words = text.toLowerCase().replace(/[.,!?;:"'()]/g, '').split(/\s+/);
+                            let translatedWords = words.map(w => offlineDict[w] || w);
+                            let offlineTranslation = translatedWords.join(' ');
+                            if (offlineTranslation.toLowerCase() !== text.toLowerCase()) return offlineTranslation + ' (офлайн)';
+                        } else if (targetLang === 'en') {
+                            if (Object.keys(reverseOfflineDict).length === 0) buildReverseDict();
+                            let words = text.toLowerCase().replace(/[.,!?;:"'()]/g, '').split(/\s+/);
+                            let translatedWords = words.map(w => reverseOfflineDict[w] || w);
+                            let offlineTranslation = translatedWords.join(' ');
+                            if (offlineTranslation.toLowerCase() !== text.toLowerCase()) return offlineTranslation + ' (офлайн)';
+                        }
+                    } catch (e) { console.error("Ошибка офлайн-словаря:", e); }
+                }
+                return '⚠️ Нет интернета (или Google недоступен), а офлайн-словарь не скачан.';
+            }
+        }
+
+        function parseBookText(rawText, customNames) {
+            let text = rawText.replace(/[“”«»]/g, '"').replace(/[‘’]/g, "'"), paragraphs = text.split('\n').filter(p => p.trim() !== ''), parsedItems = [], lastSpeaker = null;
+            paragraphs.forEach((p) => {
+                let speakerName = null;
+                let match = p.match(/(?:said|asked|replied|answered|whispered|shouted|muttered|сказал|спросил|ответил|прошептал|крикнул|пробормотал)\s+([A-ZА-Я][a-zа-я]+)/i);
+                if (match && !['One', 'Another', 'The', 'An', 'I', 'He', 'She', 'Один', 'Другой', 'Я', 'Он', 'Она'].includes(match[1])) speakerName = match[1];
+                else { 
+                    match = p.match(/([A-ZА-Я][a-zа-я]+)\s+(?:said|asked|replied|answered|whispered|shouted|muttered|сказал|спросил|ответил|прошептал|крикнул|пробормотал)/i); 
+                    if (match && !['The', 'An', 'One', 'I', 'He', 'She', 'Этот', 'Один', 'Я', 'Он', 'Она'].includes(match[1])) speakerName = match[1]; 
+                }
+                if (!speakerName && customNames.length > 0) { for (let name of customNames) { if (new RegExp(`\\b${name}\\b`, 'i').test(p)) { speakerName = name; break; } } }
+                if (!speakerName && p.match(/\b(I|Я)\s+(?:said|asked|whispered|shouted|replied|muttered|сказал|спросил|прошептал|крикнул|ответил|пробормотал)/i)) speakerName = 'Рассказчик';
+                let currentSpeaker = speakerName; if (!currentSpeaker) { if (!lastSpeaker) currentSpeaker = 'Собеседник 1'; else if (lastSpeaker === 'Собеседник 1') currentSpeaker = 'Собеседник 2'; else if (lastSpeaker === 'Собеседник 2') currentSpeaker = 'Собеседник 1'; else currentSpeaker = 'Собеседник 1'; }
+                const dialogueRegex = /(?:^|\s)(["'])(.*?)\1(?=\s|$|[.,!?;:])/g; let lastIndex = 0, partMatch, hasDialogue = false;
+                while ((partMatch = dialogueRegex.exec(p)) !== null) { hasDialogue = true; let narration = p.substring(lastIndex, partMatch.index).trim(); if (narration) processNarration(narration).forEach(item => parsedItems.push(item)); parsedItems.push({ type: 'dialogue', speaker: currentSpeaker, text: partMatch[2].trim(), original: partMatch[0].trim() }); lastIndex = partMatch.index + partMatch[0].length; }
+                let remaining = p.substring(lastIndex).trim(); if (remaining) processNarration(remaining).forEach(item => parsedItems.push(item)); if (hasDialogue) lastSpeaker = currentSpeaker;
+            });
+            return parsedItems;
+        }
+
+        function processNarration(text) {
+            let items = [], sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+            sentences.forEach(s => { if (s.trim()) items.push({ type: 'narration', speaker: 'Автор', text: s.trim(), original: s.trim() }); }); return items;
+        }
+
+        function wrapWords(text) {
+            const fragment = document.createDocumentFragment();
+            text.split(/(\s+)/).forEach(part => { if (part.trim() === '') fragment.appendChild(document.createTextNode(part)); else { const span = document.createElement('span'); span.className = 'word'; span.textContent = part; fragment.appendChild(span); } });
+            const c = document.createElement('div'); c.appendChild(fragment); return c.innerHTML;
+        }
+
+        window.generateButtons = async function() {
+            const input = document.getElementById('dialogInput').value, out = document.getElementById('output'), isBook = document.getElementById('bookModeCheckbox').checked, chars = document.getElementById('customCharacters').value.split(',').map(c => c.trim()).filter(c => c !== '');
+            out.innerHTML = ''; linesData = []; speakerVoiceMap = {}; stopSpeaking(true); loadVoices();
+            if (!input.trim()) { alert("Вставьте текст."); return; }
+
+            let parsed = [];
+            if (isBook) parsed = parseBookText(input, chars);
+            else {
+                input.split('\n').map(l => l.trim()).filter(l => l !== '').forEach(line => {
+                    let name = "По умолчанию", txt = line; const m = line.match(/^([A-Za-zА-Яа-яЁё\s\-]{1,20}):\s*(.*)/);
+                    if (m) { name = m[1].trim(); txt = m[2]; } parsed.push({ type: 'dialogue', speaker: name, text: txt, original: line });
+                });
+            }
+
+            const uniq = [...new Set(parsed.map(i => i.speaker))];
+            if (uniq.includes('Автор')) { uniq.splice(uniq.indexOf('Автор'), 1); uniq.push('Автор'); }
+            uniq.forEach((spk, idx) => { if (availableVoices.length > 0) speakerVoiceMap[spk] = availableVoices[idx % availableVoices.length]; });
+
+            for (let i = 0; i < parsed.length; i++) {
+                const item = parsed[i]; linesData.push({ speechText: item.text, speaker: item.speaker, original: item.original });
+                const itemDiv = document.createElement('div'); itemDiv.className = 'line-item'; itemDiv.id = `line-${i}`;
+                const pBtn = document.createElement('button'); pBtn.className = 'play-btn'; pBtn.innerHTML = '▶️';
+                pBtn.onclick = () => { stopSpeaking(true); const c = document.getElementById(`orig-${i}`); if (c) c.querySelectorAll('.word').forEach(el => el.classList.remove('read-word')); speakText(item.text, item.speaker, i); };
+                const tCont = document.createElement('div'); tCont.className = 'text-container';
+                tCont.innerHTML = `<div class="speaker-tag">${item.speaker}</div><div class="original-text" id="orig-${i}">${wrapWords(item.original)}</div><div class="translation-text" id="trans-${i}">Перевод загружается...</div>`;
+                itemDiv.appendChild(pBtn); itemDiv.appendChild(tCont); out.appendChild(itemDiv);
+
+                setTimeout(async () => {
+                    const translated = await fetchTranslation(item.text);
+                    const el = document.getElementById(`trans-${i}`); if (el) el.textContent = translated;
+                }, i * 1200); 
+            }
+        };
+
+        function speakText(text, speakerName, index = null, onEnd = null) { speakTextFallback(text, speakerName, index, onEnd); }
+
+        window.clearAll = function() {
+            stopSpeaking(true); document.getElementById('dialogInput').value = ''; document.getElementById('output').innerHTML = ''; linesData = []; speakerVoiceMap = {}; document.getElementById('floatingSelectionMenu').style.display = 'none'; document.getElementById('dialogInput').focus();
+        };
+
+        window.toggleSearchPanel = function() {
+            const wrapper = document.getElementById('searchTabsWrapper');
+            const btn = document.getElementById('searchToggleBtn');
+            wrapper.classList.toggle('open');
+            if (wrapper.classList.contains('open')) {
+                btn.innerHTML = '🔍 Поиск и темы ▲';
+            } else {
+                btn.innerHTML = '🔍 Поиск и темы ▼';
+            }
+        };
+
+        window.openAddSheet = function() {
+            document.getElementById('addPhraseForm').classList.add('show');
+            document.querySelector('.close-sheet-btn').style.display = 'block';
+            document.getElementById('newPhraseEn').focus();
+        };
+
+        window.closeAddSheet = function() {
+            document.getElementById('addPhraseForm').classList.remove('show');
+            document.querySelector('.close-sheet-btn').style.display = 'none';
+            document.getElementById('newPhraseEn').value = '';
+            document.getElementById('newPhraseRu').value = '';
+        };
+
+        window.onload = () => { initTheme(); loadSettings(); loadVoices(); checkOfflineDict(); };
+    </script>
+</body>
+</html>
